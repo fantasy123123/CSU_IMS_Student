@@ -8,10 +8,10 @@ import {
     Checkbox,
     Message,
     Upload,
-    Modal,
     InputNumber
 } from '@arco-design/web-react';
-import PubSub from "pubsub-js"
+import store from "../redux/store";
+import {createAddBonusPoint} from "../redux/action";
 
 const FormItem = Form.Item;
 const TextArea= Input.TextArea
@@ -43,11 +43,17 @@ function AddBonusPointForm({ifAddBonusPointFunction}) {
     let categoryInput;
     let addValueInput;
     let detailsInput;
-    let proofPictureSRC;
 
     return (
-        <div style={{position:"absolute",left:'0',right:'0',top:'0',bottom:'0',backgroundColor:'rgba(0,0,0,0.3)'}}>
-            <div style={{ backgroundColor:'white',position:'absolute',left:'25%',right:'30%',top:'15%', borderRadius:'15px'}}>
+            <div style={{
+                backgroundColor:'white',
+                position:'absolute',
+                left:'25%',
+                right:'30%',
+                top:'15%',
+                borderRadius:'15px',
+                boxShadow:"0px 0px 10px 5px #aaa"
+            }}>
             <br/>
                 <b style={{color:'black',fontSize:'25px'}}>增添加分项</b>
             <br/><br/>
@@ -90,22 +96,6 @@ function AddBonusPointForm({ifAddBonusPointFunction}) {
                         multiple
                         name='files'
                         action='/'
-                        onPreview={(file) => {
-                            Modal.info({
-                                title: 'Preview',
-                                content: (
-                                    <img
-                                        alt='proofPicture'
-                                        src={file.url || URL.createObjectURL(file.originFile)}
-                                        style={{
-                                            maxWidth: '100%',
-                                        }}
-                                        id='proofPicture'
-                                    ></img>
-                                ),
-                            });
-                            proofPictureSRC=document.querySelector('#proofPicture').src
-                        }}
                     />
                 </Form.Item>
 
@@ -134,13 +124,14 @@ function AddBonusPointForm({ifAddBonusPointFunction}) {
                                         bonusPointName:nameInput.dom.value,
                                         bonusScoreCategory:categoryInput.dom.value,
                                         addedValue:Number(addValueInput.dom.value),
-                                        proofPicture:<img
-                                            alt='proofPicture'
-                                            src={proofPictureSRC}
-                                        />,
+                                        proofPicture:[
+                                            '/avatar.img',
+                                            '/avatar.img'
+                                        ],
                                         detailInformation:detailsInput.dom.value
                                     }
-                                    PubSub.publish('addBonusPoint',addBonusPointItem)//将新增的数据传递给加分项列表
+                                    // PubSub.publish('addBonusPoint',addBonusPointItem)//将新增的数据传递给加分项列表
+                                    store.dispatch(createAddBonusPoint(addBonusPointItem))
                                     ifAddBonusPointFunction(false)//关闭此表单
                                 } catch (_) {
                                     console.log(formRef.current.getFieldsError());
@@ -172,7 +163,6 @@ function AddBonusPointForm({ifAddBonusPointFunction}) {
                     </Button>
                 </FormItem>
             </Form>
-        </div>
         </div>
     );
 }

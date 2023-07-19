@@ -5,11 +5,12 @@ import React, {
     useRef,
 } from 'react';
 import '../css/bonusScoreList.css'
-import { Input} from '@arco-design/web-react';
+import {Input, Space} from '@arco-design/web-react';
 import { IconSearch } from '@arco-design/web-react/icon';
 import { Button, Table,Form } from '@arco-design/web-react';
 import {IconDownload, IconPlus} from "@arco-design/web-react/icon";
-import PubSub from "pubsub-js"
+import {Image} from "@arco-design/web-react";
+import store from "../redux/store";
 
 const EditableContext = React.createContext({});
 
@@ -52,99 +53,17 @@ function EditableCell(props) {
     );
 }
 
-function EditableTable({ifAddBonusPointFunction,ifChangeBonusPointFunction}) {
+function EditableTable({ifAddBonusPointFunction,ifChangeBonusPointFunction,ifShowDetailsFunction,sendDetails,getChangeBonusPoint}) {
     const inputRef1 = useRef(null);
     const inputRef2 = useRef(null);
-    const [count, setCount] = useState(5);
-    const [data, setData] = useState([
-        {
-            key: 1,
-            bonusPointName:'名称1',
-            bonusScoreCategory:'类别3',
-            addedValue:3.00,
-            proofPicture:<img
-                alt='proofPicture'
-                src='/avatar.img'
-            />,
-            detailInformation:'详细信息'
-        },
-        {
-            key: 2,
-            bonusPointName:'名称2',
-            bonusScoreCategory:'类别1',
-            addedValue:1.00,
-            proofPicture:<img
-                alt='proofPicture'
-                src='/avatar.img'
-            />,
-            detailInformation:'详细信息'
-        },
-        {
-            key: 3,
-            bonusPointName:'名称3',
-            bonusScoreCategory:'类别3',
-            addedValue:3.00,
-            proofPicture:<img
-                alt='proofPicture'
-                src='/avatar.img'
-            />,
-            detailInformation:'详细信息'
-        },
-        {
-            key: 4,
-            bonusPointName:'名称4',
-            bonusScoreCategory:'类别2',
-            addedValue:2.00,
-            proofPicture:<img
-                alt='proofPicture'
-                src='/avatar.img'
-            />,
-            detailInformation:'详细信息'
-        },
-        {
-            key: 5,
-            bonusPointName:'名称5',
-            bonusScoreCategory:'类别1',
-            addedValue:1.00,
-            proofPicture:<img
-                alt='proofPicture'
-                src='/avatar.img'
-            />,
-            detailInformation:'详细信息'
-        }
-    ]);
+    const [pagination, setPagination] = useState({
+        showTotal: true,
+        pageSize: 5,
+    });
+    const [data, setData] = useState(store.getState());
 
-    //接收添加加分项表单传递的数据
-    PubSub.unsubscribe('addBonusPoint');
-    PubSub.subscribe('addBonusPoint',(msg,item)=>{
-        setCount(count + 1);
-        setData(
-            data.concat({
-                key: Number(`${count + 1}`),
-                ...item
-            })
-        );
-    })
-
-    //将修改的数据传递给加分项列表
-    PubSub.unsubscribe('changeBonusPoint')
-    PubSub.subscribe('changeBonusPoint',(msg,item)=>{
-        for (let i=0;i<data.length;i++){
-            if(data[i].key===item.key){
-                data.splice(i,1,item)
-                setData([...data])
-            }
-        }
-    })
-
-    PubSub.unsubscribe('deleteBonusPoint')
-    PubSub.subscribe('deleteBonusPoint',(msg,item)=>{
-        for (let i=0;i<data.length;i++){
-            if(data[i].key===item.key){
-                data.splice(i,1)
-                setData([...data])
-            }
-        }
+    store.subscribe(()=>{
+        setData([...store.getState()])
     })
 
     const columns = [
@@ -215,17 +134,35 @@ function EditableTable({ifAddBonusPointFunction,ifChangeBonusPointFunction}) {
         },
         {
             title: '证明图片',
-            dataIndex: 'proofPicture',
-            render: () => (
-                <div style={{color:'blue'}}>查看大图</div>
-            )
+            dataIndex: 'key',
+            render:(index,record)=>{
+                return (
+                    <Space direction='vertical'>
+                        <Image.PreviewGroup infinite>
+                            <Space>
+                                {record.proofPicture.map((src, index) => (
+                                    <Image key={index} src={src} width={40} alt={`lamp${index + 1}`} />
+                                ))}
+                            </Space>
+                        </Image.PreviewGroup>
+                    </Space>
+                )
+            }
         },
         {
             title: '详细信息',
-            dataIndex: 'detailInformation',
-            render: () => (
-                <div style={{color:'blue'}}>查看详细信息</div>
-            )
+            dataIndex: 'key',
+            render: (index,record) => {
+                return (<Button
+                    type="secondary"
+                    onClick={() => {
+                        sendDetailInformation(index)
+                    }
+                    }
+                >
+                    查看详细信息
+                </Button>)
+            }
         },
         {
             title:'操作',
@@ -262,7 +199,17 @@ function EditableTable({ifAddBonusPointFunction,ifChangeBonusPointFunction}) {
         for(let i=0;i<data.length;i++)
         {
             if(index===data[i].key){
-                PubSub.publish('changBonusPoint',data[i])
+                getChangeBonusPoint(data[i])
+            }
+        }
+    }
+
+    function sendDetailInformation(index){
+        ifShowDetailsFunction(true);
+        for(let i=0;i<data.length;i++)
+        {
+            if(index===data[i].key){
+                sendDetails({'detailInformation':data[i].detailInformation})
             }
         }
     }
@@ -316,6 +263,7 @@ function EditableTable({ifAddBonusPointFunction,ifChangeBonusPointFunction}) {
                 tableLayoutFixed={true}
                 stripe={true}
                 data={data}
+                pagination={pagination}
                 components={{
                     body: {
                         row: EditableRow,

@@ -8,9 +8,10 @@ import {
     Checkbox,
     Message,
     Upload,
-    Modal, InputNumber,
+    InputNumber,
 } from '@arco-design/web-react';
-import PubSub from "pubsub-js"
+import store from "../redux/store";
+import {createChangeBonusPoint, createDeleteBonusPoint} from "../redux/action";
 
 const TextArea=Input.TextArea
 const FormItem = Form.Item;
@@ -42,11 +43,31 @@ function ChangeBonusPointForm({ifChangeBonusPointFunction,changeItem}) {
     let categoryInput;
     let addValueInput;
     let detailsInput;
-    let proofPictureSRC;
+
+    function sliceArr(arr,size) {
+        // arr是传入的要切割的数组
+        // size是每个切割的数组有多少项
+        let newArr = [];
+        for (let i = 0; i < arr.length; i++) {
+            let picture={alt:'proofPicture',url:arr[i]}
+            newArr.push(picture);
+        }
+        return newArr;
+    }
+
+    let proofPictures=sliceArr(changeItem[changeItem.length-1].proofPicture,1);
+
 
     return (
-        <div style={{position:"absolute",left:'0',right:'0',top:'0',bottom:'0',backgroundColor:'rgba(0,0,0,0.3)'}}>
-            <div style={{ backgroundColor:'white',position:'absolute',left:'25%',right:'30%',top:'15%', borderRadius:'15px'}}>
+            <div style={{
+                backgroundColor:'white',
+                position:'absolute',
+                left:'25%',
+                right:'30%',
+                top:'15%',
+                borderRadius:'15px',
+                boxShadow:"0px 0px 10px 5px #aaa"
+            }}>
                 <br/>
                 <b style={{color:'black',fontSize:'25px'}}>修改加分项</b>
                 <br/><br/>
@@ -89,32 +110,14 @@ function ChangeBonusPointForm({ifChangeBonusPointFunction,changeItem}) {
                         field='证明图片'
                         triggerPropName='fileList'
                         rules={[{ required: true }]}
-                        initialValue={[
-                            {
-                                url:changeItem[changeItem.length-1].proofPicture.props.src,
-                                alt:changeItem[changeItem.length-1].proofPicture.props.alt
-                            },
-                        ]}
+                        initialValue={proofPictures}
                     >
                         <Upload
                             listType='picture-card'
                             multiple
+                            imagePreview
                             name='files'
                             action='/'
-                            onPreview={(file) => {
-                                Modal.info({
-                                    title: 'Preview',
-                                    content: (
-                                        <img
-                                            src={file.url || URL.createObjectURL(file.originFile)}
-                                            style={{
-                                                maxWidth: '100%',
-                                            }}
-                                        ></img>
-                                    ),
-                                });
-                                proofPictureSRC=document.querySelector('#proofPicture').src
-                            }}
                         />
                     </Form.Item>
 
@@ -146,13 +149,11 @@ function ChangeBonusPointForm({ifChangeBonusPointFunction,changeItem}) {
                                             bonusPointName:nameInput.dom.value,
                                             bonusScoreCategory:categoryInput.dom.value,
                                             addedValue:Number(addValueInput.dom.value),
-                                            proofPicture:<img
-                                                alt='proofPicture'
-                                                src={proofPictureSRC}
-                                            />,
+                                            proofPicture:['/avatar.img'],
                                             detailInformation:detailsInput.dom.value,
                                         }
-                                        PubSub.publish('changeBonusPoint',changeBonusPointItem)//将新增的数据传递给加分项列表
+                                        // PubSub.publish('changeBonusPoint',changeBonusPointItem)//将新增的数据传递给加分项列表
+                                        store.dispatch(createChangeBonusPoint(changeBonusPointItem))
                                         ifChangeBonusPointFunction(false)//关闭修改加分项表单
                                     } catch (_) {
                                         console.log(formRef.current.getFieldsError());
@@ -174,10 +175,11 @@ function ChangeBonusPointForm({ifChangeBonusPointFunction,changeItem}) {
                         </Button>
                         <Button
                             onClick={() => {
-                                const changeBonusPointItem={
+                                const deleteBonusPointItem={
                                     key:changeItem[changeItem.length-1].key,
                                 }
-                                PubSub.publish('deleteBonusPoint',changeBonusPointItem)//将需要删除的数据传递给加分项列表
+                                // PubSub.publish('deleteBonusPoint',deleteBonusPointItem)//将需要删除的数据传递给加分项列表
+                                store.dispatch(createDeleteBonusPoint(deleteBonusPointItem))
                                 ifChangeBonusPointFunction(false)//关闭修改加分项表单
                             }}
                             status={"danger"}
@@ -189,7 +191,6 @@ function ChangeBonusPointForm({ifChangeBonusPointFunction,changeItem}) {
                     </FormItem>
                 </Form>
             </div>
-        </div>
     );
 }
 

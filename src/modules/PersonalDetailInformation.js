@@ -2,25 +2,21 @@
 
 import { Descriptions } from '@arco-design/web-react';
 import '../css/personalDetailInformation.css'
+
+const person={
+    '姓名':"夏铎恺",
+    '学院':"计算机学院",
+    '专业班级':'软件工程2206',
+    '学号':"8209220608",
+};
+
+const data=[];
+
+Object.keys(person).forEach(key=>{
+    data.push({label:key,value:person[key]})
+})
+
 const PersonalDetailInformation=()=>{
-    const data = [
-        {
-            label: '姓名',
-            value: '夏铎恺',
-        },
-        {
-            label: '院系',
-            value: '计算机学院',
-        },
-        {
-            label: '专业班级',
-            value: '软件工程2206',
-        },
-        {
-            label: '学号',
-            value: '8209220608',
-        },
-    ];
     return (
         <div>
             <br/>

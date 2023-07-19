@@ -6,7 +6,7 @@ import {Button} from "@arco-design/web-react";
 const PersonalInformation=()=>{
     return (
         <div style={{position:"absolute",
-            top:'10%',
+            top:'5%',
             left:'15%',
             right:'15%',
             fontSize:'22px'
